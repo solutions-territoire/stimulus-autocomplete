@@ -8,12 +8,14 @@ export default class Autocomplete extends Controller {
   static classes = ["selected"]
   static values = {
     ready:         Boolean,
-    submitOnEnter: Boolean,
+    submitOnEnter: { type: Boolean, default: false },
+    requireMatch:  { type: Boolean, default: true },
     url:           String,
     minLength:     Number,
     delay:         { type: Number, default: 300 },
     queryParam:    { type: String, default: "q" },
   }
+
   static uniqOptionId = 0
 
   connect() {
@@ -105,13 +107,19 @@ export default class Autocomplete extends Controller {
   }
 
   onEnterKeydown = (event) => {
-    const selected = this.selectedOption
+    const selected       = this.selectedOption
+    const value          = this.inputTarget.value
+    const preventDefault = !this.submitOnEnterValue
+
     if (selected && this.resultsShown) {
       this.commit(selected)
-      if (!this.hasSubmitOnEnterValue) {
-        event.preventDefault()
-      }
+      if (preventDefault) event.preventDefault()
+    } else if (!selected && !this.requireMatchValue && value) {
+      this.commitValue(value)
+      if (preventDefault) event.preventDefault()
     }
+
+    event.preventDefault()
   }
 
   onInputBlur = () => {
@@ -132,6 +140,10 @@ export default class Autocomplete extends Controller {
     const value = selected.getAttribute("data-autocomplete-value") || textValue
     this.inputTarget.value = textValue
 
+    this.commitValue(value, { textValue: textValue, selected: selected })
+  }
+
+  commitValue(value, changeDetail) {
     if (this.hasHiddenTarget) {
       this.hiddenTarget.value = value
       this.hiddenTarget.dispatchEvent(new Event("input"))
@@ -143,10 +155,13 @@ export default class Autocomplete extends Controller {
     this.inputTarget.focus()
     this.hideAndRemoveOptions()
 
+    changeDetail ||= {}
+    changeDetail["value"] = value
+
     this.element.dispatchEvent(
       new CustomEvent("autocomplete.change", {
         bubbles: true,
-        detail: { value: value, textValue: textValue, selected: selected }
+        detail: changeDetail
       })
     )
   }
