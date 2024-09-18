@@ -7,12 +7,12 @@ export default class Autocomplete extends Controller {
   static targets = ["input", "hidden", "results"]
   static classes = ["selected"]
   static values = {
-    ready: Boolean,
+    ready:         Boolean,
     submitOnEnter: Boolean,
-    url: String,
-    minLength: Number,
-    delay: { type: Number, default: 300 },
-    queryParam: { type: String, default: "q" },
+    url:           String,
+    minLength:     Number,
+    delay:         { type: Number, default: 300 },
+    queryParam:    { type: String, default: "q" },
   }
   static uniqOptionId = 0
 
@@ -283,8 +283,13 @@ export default class Autocomplete extends Controller {
     return this.hasSelectedClass ? this.selectedClasses : ["active"]
   }
 
-  optionsForFetch() {
-    return { headers: { "X-Requested-With": "XMLHttpRequest" } } // override if you need
+  optionsForFetch () {
+    return {
+      headers: {
+        "Accept-Variant": "Autocomplete",
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    }
   }
 }
 
