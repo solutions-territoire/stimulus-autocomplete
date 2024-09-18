@@ -11,7 +11,7 @@ export default class Autocomplete extends Controller {
     submitOnEnter: { type: Boolean, default: false },
     requireMatch:  { type: Boolean, default: true },
     url:           String,
-    minLength:     Number,
+    minLength:     { type: Number, default: 1 },
     delay:         { type: Number, default: 300 },
     queryParam:    { type: String, default: "q" },
   }
@@ -29,6 +29,7 @@ export default class Autocomplete extends Controller {
     this.onInputChange = debounce(this.onInputChange, this.delayValue)
 
     this.inputTarget.addEventListener("keydown", this.onKeydown)
+    this.inputTarget.addEventListener("focusin", this.onInputFocus)
     this.inputTarget.addEventListener("blur", this.onInputBlur)
     this.inputTarget.addEventListener("input", this.onInputChange)
     this.resultsTarget.addEventListener("mousedown", this.onResultsMouseDown)
@@ -122,6 +123,17 @@ export default class Autocomplete extends Controller {
     event.preventDefault()
   }
 
+  onInputFocus = () => {
+    if (this.hiddenTarget.value) return;
+
+    const query = this.inputTarget.value.trim()
+    const length = query ? query.length : 0
+
+    if (length >= this.minLengthValue) {
+      this.fetchResults(query)
+    }
+  }
+
   onInputBlur = () => {
     if (this.mouseDown) return
     this.close()
@@ -187,8 +199,10 @@ export default class Autocomplete extends Controller {
   onInputChange = () => {
     if (this.hasHiddenTarget) this.hiddenTarget.value = ""
 
-    const query = this.inputTarget.value.trim()
-    if (query && query.length >= this.minLengthValue) {
+    const query  = this.inputTarget.value.trim()
+    const length = query ? query.length : 0
+
+    if (length >= this.minLengthValue) {
       this.fetchResults(query)
     } else {
       this.hideAndRemoveOptions()
