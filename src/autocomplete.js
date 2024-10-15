@@ -7,13 +7,15 @@ export default class Autocomplete extends Controller {
   static targets = ["input", "hidden", "results"]
   static classes = ["selected"]
   static values = {
-    ready:         Boolean,
-    submitOnEnter: { type: Boolean, default: false },
-    requireMatch:  { type: Boolean, default: true },
-    url:           String,
-    minLength:     { type: Number, default: 1 },
-    delay:         { type: Number, default: 300 },
-    queryParam:    { type: String, default: "q" },
+    ready:           Boolean,
+    requireMatch:    { type: Boolean, default: true },
+    revealOnFocus:   { type: Boolean, default: false },
+    revealOnKeyDown: { type: Boolean, default: true },
+    submitOnEnter:   { type: Boolean, default: false },
+    url:             String,
+    minLength:       { type: Number, default: 1 },
+    delay:           { type: Number, default: 300 },
+    queryParam:      { type: String, default: "q" },
   }
 
   static uniqOptionId = 0
@@ -91,9 +93,14 @@ export default class Autocomplete extends Controller {
   }
 
   onArrowDownKeydown = (event) => {
-    const item = this.sibling(true)
-    if (item) this.select(item)
-    event.preventDefault()
+    if (this.resultsShown) {
+      const item = this.sibling(true)
+      if (item) this.select(item)
+      event.preventDefault()
+    } else if (this.revealOnKeyDownValue) {
+      const query = this.inputTarget.value.trim()
+      this.fetchResults(query)
+    }
   }
 
   onArrowUpKeydown = (event) => {
@@ -125,6 +132,7 @@ export default class Autocomplete extends Controller {
 
   onInputFocus = () => {
     if (this.hiddenTarget.value) return;
+    if (!this.revealOnFocusValue) return;
 
     const query = this.inputTarget.value.trim()
     const length = query ? query.length : 0
