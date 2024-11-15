@@ -269,10 +269,13 @@ export default class Autocomplete extends Controller {
     this.resultsTarget.innerHTML = html
     this.identifyOptions()
 
-    const options = this.options
-    if (options && options.length) {
+    if (this.resultsTarget.children.length) {
       this.open()
-      this.select(options[0])
+
+      const options = this.options
+      if (options && options.length) {
+        this.select(options[0])
+      }
     } else {
       this.close()
     }
