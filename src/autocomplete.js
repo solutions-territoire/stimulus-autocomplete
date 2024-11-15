@@ -9,6 +9,7 @@ export default class Autocomplete extends Controller {
   static values = {
     ready:           Boolean,
     requireMatch:    { type: Boolean, default: true },
+    revealOnClick:   { type: Boolean, default: false },
     revealOnFocus:   { type: Boolean, default: false },
     revealOnKeyDown: { type: Boolean, default: true },
     submitOnEnter:   { type: Boolean, default: false },
@@ -22,8 +23,7 @@ export default class Autocomplete extends Controller {
 
   connect() {
     this.close()
-
-    if(!this.inputTarget.hasAttribute("autocomplete")) this.inputTarget.setAttribute("autocomplete", "off")
+    this.inputTarget.setAttribute("autocomplete", "off")
     this.inputTarget.setAttribute("spellcheck", "false")
 
     this.mouseDown = false
@@ -34,6 +34,7 @@ export default class Autocomplete extends Controller {
     this.inputTarget.addEventListener("focusin", this.onInputFocus)
     this.inputTarget.addEventListener("blur", this.onInputBlur)
     this.inputTarget.addEventListener("input", this.onInputChange)
+    this.inputTarget.addEventListener("click", this.onInputClick)
     this.resultsTarget.addEventListener("mousedown", this.onResultsMouseDown)
     this.resultsTarget.addEventListener("click", this.onResultsClick)
 
@@ -47,8 +48,10 @@ export default class Autocomplete extends Controller {
   disconnect() {
     if (this.hasInputTarget) {
       this.inputTarget.removeEventListener("keydown", this.onKeydown)
+      this.inputTarget.removeEventListener("focusin", this.onInputFocus)
       this.inputTarget.removeEventListener("blur", this.onInputBlur)
       this.inputTarget.removeEventListener("input", this.onInputChange)
+      this.inputTarget.removeEventListener("click", this.onInputClick)
     }
 
     if (this.hasResultsTarget) {
@@ -98,8 +101,7 @@ export default class Autocomplete extends Controller {
       if (item) this.select(item)
       event.preventDefault()
     } else if (this.revealOnKeyDownValue) {
-      const query = this.inputTarget.value.trim()
-      this.fetchResults(query)
+      this.fetchInput()
     }
   }
 
@@ -132,19 +134,17 @@ export default class Autocomplete extends Controller {
 
   onInputFocus = () => {
     if (this.hiddenTarget.value) return;
-    if (!this.revealOnFocusValue) return;
-
-    const query = this.inputTarget.value.trim()
-    const length = query ? query.length : 0
-
-    if (length >= this.minLengthValue) {
-      this.fetchResults(query)
-    }
+    if (this.revealOnFocusValue) this.fetchInput()
   }
 
   onInputBlur = () => {
     if (this.mouseDown) return
     this.close()
+  }
+
+  onInputClick = () => {
+    if (this.hiddenTarget.value) return;
+    if (this.revealOnClickValue) this.fetchInput()
   }
 
   commit(selected) {
@@ -207,14 +207,7 @@ export default class Autocomplete extends Controller {
   onInputChange = () => {
     if (this.hasHiddenTarget) this.hiddenTarget.value = ""
 
-    const query  = this.inputTarget.value.trim()
-    const length = query ? query.length : 0
-
-    if (length >= this.minLengthValue) {
-      this.fetchResults(query)
-    } else {
-      this.hideAndRemoveOptions()
-    }
+    this.fetchInput() || this.hideAndRemoveOptions()
   }
 
   identifyOptions() {
@@ -226,6 +219,18 @@ export default class Autocomplete extends Controller {
   hideAndRemoveOptions() {
     this.close()
     this.resultsTarget.innerHTML = null
+  }
+
+  fetchInput () {
+    const query = this.inputTarget.value.trim()
+    const length = query ? query.length : 0
+
+    if (length >= this.minLengthValue) {
+      this.fetchResults(query)
+      return true
+    } else {
+      return false
+    }
   }
 
   fetchResults = async (query) => {
