@@ -156,10 +156,10 @@ export default class Autocomplete extends Controller {
       return
     }
 
-    const textValue = selected.getAttribute("data-autocomplete-label") || selected.textContent.trim()
-    const value = selected.getAttribute("data-autocomplete-value") || textValue
-    this.inputTarget.value = textValue
+    const textValue = selected.hasAttribute("data-autocomplete-label") ? selected.getAttribute("data-autocomplete-label") : selected.textContent.trim()
+    const value     = selected.hasAttribute("data-autocomplete-value") ? selected.getAttribute("data-autocomplete-value") : textValue
 
+    this.inputTarget.value = textValue
     this.commitValue(value, { textValue: textValue, selected: selected })
   }
 
