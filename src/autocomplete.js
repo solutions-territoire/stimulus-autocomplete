@@ -112,6 +112,8 @@ export default class Autocomplete extends Controller {
   }
 
   onTabKeydown = (event) => {
+    if (event.shiftKey) return
+
     const selected = this.selectedOption
     if (selected) this.commit(selected)
   }
